@@ -145,7 +145,7 @@ int totalTime() {
     return total;
 }
 
-int  totaltime ;
+float  totaltime ;
 // Function to draw the Gantt chart
 void drawGanttChart() {
     if (selectedAlgorithm == 1)
@@ -156,11 +156,11 @@ void drawGanttChart() {
         // Draw vertical lines representing divisions based on number of processes
        // Number of processes
      
-        float divisionWidth = ganttChart.width / (totaltime/quantum);
+        float divisionWidth = ganttChart.width / ((totaltime/quantum)+1);
 
         glColor3f(0.5, 0.5, 0.5); // Gray color for division lines
         glBegin(GL_LINES);
-        for (int i = 1; i < (totaltime/quantum); i++) {
+        for (int i = 1; i <( (totaltime/quantum)+1); i++) {
             float x = ganttChart.x + i * divisionWidth;
             glVertex2f(x, ganttChart.y);
             glVertex2f(x, ganttChart.y + ganttChart.height);
@@ -352,8 +352,12 @@ void UpdateRoundRobin() {
 
     // Execute the currently executing process (if any)
     if (prevExecutingProcessIndex != -1) {
+        if (prevExecutingProcessIndex >= processes.size()) {
+            prevExecutingProcessIndex--; // Reset to indicate no executing process
+        }
+
         Process& p = processes[prevExecutingProcessIndex];
-        cout << p.burstTime << endl;
+      
         // Calculate the distance to move the process towards the CPU
         float dx = cpu.x - p.x;
         float dy = cpu.y - p.y;
@@ -367,6 +371,7 @@ void UpdateRoundRobin() {
         if (p.x >= cpu.x - 20 && p.x <= cpu.x + 20 && p.y >= cpu.y - 20 && p.y <= cpu.y + 20) {
             // Execute the process for one time unit (quantum)
             p.burstTime -= min(quantum, p.burstTime);
+            cout << p.burstTime << endl;
             
             if (p.burstTime != 0)
             {
@@ -382,8 +387,12 @@ void UpdateRoundRobin() {
             else if (p.burstTime == 0) {
               
                 ganttChart.chart.push_back({ p.pid, make_tuple(p.arrivalTime, currentTime, p.color) });
-                readyQueue.pop(); // Put the process back into the ready queue
-                processes.erase(processes.begin() + prevExecutingProcessIndex);
+                readyQueue.pop(); 
+               
+
+                // Remove the process from the processes vector
+                processes.erase(processes.begin() + prevExecutingProcessIndex);// Put the process back into the ready queue
+               
                 prevExecutingProcessIndex = -1; // Reset the currently executing process index to allow context switching
             }
            
