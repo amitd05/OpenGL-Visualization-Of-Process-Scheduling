@@ -338,6 +338,7 @@ void UpdateRoundRobin() {
     }
 
     // Check if no process is currently executing
+ 
     if (prevExecutingProcessIndex == -1 && !readyQueue.empty()) {
         Process& p = readyQueue.front(); // Get the front process
         p.isExecuting = true;
@@ -352,7 +353,7 @@ void UpdateRoundRobin() {
     // Execute the currently executing process (if any)
     if (prevExecutingProcessIndex != -1) {
         Process& p = processes[prevExecutingProcessIndex];
-
+        cout << p.burstTime << endl;
         // Calculate the distance to move the process towards the CPU
         float dx = cpu.x - p.x;
         float dy = cpu.y - p.y;
@@ -366,20 +367,27 @@ void UpdateRoundRobin() {
         if (p.x >= cpu.x - 20 && p.x <= cpu.x + 20 && p.y >= cpu.y - 20 && p.y <= cpu.y + 20) {
             // Execute the process for one time unit (quantum)
             p.burstTime -= min(quantum, p.burstTime);
-            cout << currentTime << endl;
+            
+            if (p.burstTime != 0)
+            {
+                ganttChart.chart.push_back({ p.pid, make_tuple(p.arrivalTime, currentTime, p.color) });
+                readyQueue.pop();
+                readyQueue.push(p);
+                prevExecutingProcessIndex = -1;
+            }
+           
+          
            
             // If the process has completed execution, update Gantt chart and remove the process
-            if (p.burstTime == 0) {
+            else if (p.burstTime == 0) {
+              
                 ganttChart.chart.push_back({ p.pid, make_tuple(p.arrivalTime, currentTime, p.color) });
-                readyQueue.pop(); // Remove the processed element from the queue
+                readyQueue.pop(); // Put the process back into the ready queue
                 processes.erase(processes.begin() + prevExecutingProcessIndex);
-                prevExecutingProcessIndex = -1; // Reset the currently executing process index
-            }
-            else {
-                ganttChart.chart.push_back({ p.pid, make_tuple(p.arrivalTime, currentTime, p.color) });
-                readyQueue.push(p); // Put the process back into the ready queue
                 prevExecutingProcessIndex = -1; // Reset the currently executing process index to allow context switching
             }
+           
+            
         }
     }
 
