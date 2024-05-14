@@ -953,7 +953,7 @@ void UpdateNonPreemptivePriorityScheduling() {
             if (a.priority != b.priority)
             {
                 
-                    return a.arrivalTime < b.arrivalTime;
+                    return a.priority < b.priority;
               
            }
             
@@ -989,12 +989,12 @@ void UpdateNonPreemptivePriorityScheduling() {
             }
             else {
                 // If arrival times are not 0, compare based on priority
-                if (a.priority != b.priority) {
-                    return a.priority < b.priority;
-                }
-                // If priorities are the same, compare arrival times
                 if (a.arrivalTime != b.arrivalTime) {
                     return a.arrivalTime < b.arrivalTime;
+                }
+                // If priorities are the same, compare arrival times
+                 if (a.priority != b.priority) {
+                    return a.priority < b.priority;
                 }
                 // If arrival times and priorities are the same, compare burst times
                 return a.burstTime < b.burstTime;
@@ -1003,46 +1003,57 @@ void UpdateNonPreemptivePriorityScheduling() {
 
 
         // Check if any process has arrived and add it to the ready queue
-        while (nextProcessIndex < processes.size() && processes[nextProcessIndex].arrivalTime <= currentTime) {
-            Process p = processes[nextProcessIndex];
-            p.x = -200 - nextProcessIndex * 20; // Initial x position
-            p.y = 100; // Initial y position
-            p.radius = 10; // Radius of the process circle
-            p.isExecuting = false;
-            p.id = nextProcessIndex + 1; // Set process ID using index
+        // Check if any process has arrived and add it to the ready queue
+        while (nextProcessIndex < processes.size()&& processes[nextProcessIndex].arrivalTime <= currentTime) {
            
-            // Update response time if it's not set
-            if (p.responseTime == 0) {
-                p.responseTime = currentTime - p.arrivalTime;
-            }
+                Process p = processes[nextProcessIndex];
+                p.x = -200 - nextProcessIndex * 20; // Initial x position
+                p.y = 100; // Initial y position
+                p.radius = 10; // Radius of the process circle
+                p.isExecuting = false;
+                p.id = nextProcessIndex + 1; // Set process ID using index
 
-            processes[nextProcessIndex] = p;
-            readyQueue.push(p);
-            nextProcessIndex++;
+                // Update response time if it's not set
+                if (p.responseTime == 0) {
+                    p.responseTime = currentTime - p.arrivalTime;
+                }
+
+                processes[nextProcessIndex] = p;
+                readyQueue.push(p);
+                nextProcessIndex++;
+          
         }
 
         // Check if no process is currently executing or context switch is needed
         if (prevExecutingProcessIndex == -1 && !readyQueue.empty()) {
             Process highestPriorityProcess = readyQueue.front(); // Initialize with the first process in the queue
             int highestPriorityIndex = 0; // Index of the highest priority process
-
-            // Iterate through the ready queue
-            int queueSize = readyQueue.size();
-            for (int i = 0; i < queueSize; ++i) {
-                // Get the front element of the queue
-                const Process& p = readyQueue.front();
-
-                // Check if the current process has higher priority than the highest priority process found so far
-                if (p.priority < highestPriorityProcess.priority) {
-                    highestPriorityProcess = p;
-                    highestPriorityIndex = i;
-                }
-
-                // Move the front element to the back of the queue
-                readyQueue.push(readyQueue.front());
-                readyQueue.pop(); // Remove the front element
+          
+            vector<Process> tempVector;
+            while (!readyQueue.empty()) {
+                tempVector.push_back(readyQueue.front());
+                readyQueue.pop();
             }
 
+            // Iterate over the vector
+            int index = 0;
+            for (const auto& p : tempVector) {
+                // Check if the current process has higher priority than the highest priority process found so far
+                if (p.burstTime > 0 && p.priority < highestPriorityProcess.priority) {
+                    highestPriorityProcess = p;
+                    highestPriorityIndex = p.id-1;
+                }
+                else if (p.burstTime > 0 && p.priority > highestPriorityProcess.priority)
+                {
+                    highestPriorityProcess = p;
+                    highestPriorityIndex = p.id - 1;
+                    break;
+                }
+                index++;
+            }
+            for (const auto& process : tempVector) {
+                readyQueue.push(process);
+            }
             // Execute the highest priority process
             highestPriorityProcess.isExecuting = true;
             prevExecutingProcessIndex = highestPriorityIndex;
@@ -1071,7 +1082,7 @@ void UpdateNonPreemptivePriorityScheduling() {
             if (p.x >= cpu.x - 20 && p.x <= cpu.x + 20 && p.y >= cpu.y - 20 && p.y <= cpu.y + 20) {
                 // Execute the process for one time unit (preemptive)
                 p.burstTime--;
-
+                cout << p.burstTime << endl;
                 if (p.burstTime != 0)
                 {
 
@@ -1147,10 +1158,56 @@ void display() {
     for (int i = 0; i < text.length(); i++) {
         glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, text[i]);
     }
+    if (selectedAlgorithm == 1) {
+        glColor3f(1.0, 0.0, 0.0); // Set text color to white
+        glRasterPos2f(140, 270); // Position the text
+        string text = "Round Robin Scheduling";
+        for (int i = 0; i < text.length(); i++) {
+            glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, text[i]);
+        }
+    }
+    else if (selectedAlgorithm == 2) {
+        glColor3f(1.0, 0.0, 0.0); // Set text color to white
+        glRasterPos2f(125, 270); // Position the text
+        string text = "Non Preemptive SJF Scheduling";
+        for (int i = 0; i < text.length(); i++) {
+            glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, text[i]);
+    }
+       
+    }else if (selectedAlgorithm == 3) {
+        glColor3f(1.0, 0.0, 0.0); // Set text color to white
+        glRasterPos2f(120, 270); // Position the text
+        string text = "Non Preemptive Priority Scheduling";
+        for (int i = 0; i < text.length(); i++) {
+            glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, text[i]);
+
+    }
+    }
+    else if (selectedAlgorithm == 4) {
+        glColor3f(1.0, 0.0, 0.0); // Set text color to white
+        glRasterPos2f(130, 270); // Position the text
+        string text = "Preemptive SJF Scheduling";
+        for (int i = 0; i < text.length(); i++) {
+            glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, text[i]);
+
+        }
+    }
+    else  {
+        glColor3f(1.0, 0.0, 0.0); // Set text color to white
+        glRasterPos2f(125, 270); // Position the text
+        string text = "Preemptive Priority Scheduling";
+        for (int i = 0; i < text.length(); i++) {
+            glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, text[i]);
+        }
+      }
+       
     float yPos = 250; // Initial y-position for process text at the top corner
     // Draw the processes
+    int pid;
+    float Totalwaitingtime = 0, Totalturnaroundtime = 0;
+   
     for (int i = 0; i < processes.size(); i++) {
-        int pid,waitingtime,turnaroundtime;
+        
         Process& p = processes[i];
         vector<float> colorVector = { p.color[0], p.color[1], p.color[2] };
         glColor3fv(colorVector.data());// Blue color for processes
@@ -1158,16 +1215,26 @@ void display() {
         glColor3fv(colorVector.data());
         stringstream ss;
         pid = p.pid;
-        waitingtime = p.waitingTime;
-        turnaroundtime = p.turnaroundTime;
-        ss << "PID: " << pid << " | Waiting Time: " << waitingtime << " | Turnaround Time: " << turnaroundtime << "|Response Time:" << p.responseTime;
+        Totalwaitingtime += p.waitingTime;
+        Totalturnaroundtime += p.turnaroundTime;
+        ss << "PID: " << pid << " | Waiting Time: " << p.waitingTime << " | Turnaround Time: " << p.turnaroundTime << "|Response Time:" << p.responseTime;
         glRasterPos2f(20.0, yPos);
+
         string processText = ss.str();
         
         for (int j = 0; j < processText.length(); j++) {
             glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, processText[j]);
         }
         yPos -= 20.0; // Move to the next line for the next process
+
+    }
+    stringstream pp;
+    pp << "Average Waiting Time: " << Totalwaitingtime/numProcesses << " |  Average Turnaround Time: " << Totalturnaroundtime/numProcesses;
+    glRasterPos2f(240, 250);
+    string processText = pp.str();
+
+    for (int j = 0; j < processText.length(); j++) {
+        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, processText[j]);
     }
     // Draw the ready queue
     drawReadyQueue();
