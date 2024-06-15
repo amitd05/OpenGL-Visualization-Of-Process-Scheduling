@@ -24,7 +24,7 @@ struct Process {
     int priority;// Priority of the process
     int waitingTime; // Waiting time for the process
     int turnaroundTime; // Turnaround time for the process
-    int responseTime;   // Response time for the process
+    int responseTime;// Response time for the process
     array<float, 3> color;// Remaining burst time of the process
 };
 
@@ -420,6 +420,7 @@ void UpdateRoundRobin() {
 
         Process& p = readyQueue.front(); // Get the front process
         p.isExecuting = true;
+
         prevExecutingProcessIndex = p.id-1 ;
         
 
@@ -439,6 +440,7 @@ void UpdateRoundRobin() {
        
 
         Process& p = processes[prevExecutingProcessIndex];
+        p.isExecuting = true;
         
         // Calculate the distance to move the process towards the CPU
         float dx = cpu.x - p.x;
@@ -455,10 +457,10 @@ void UpdateRoundRobin() {
             cpu.color[0] = 1.0;
             cpu.color[1] = 0.0;
             cpu.color[2] = 0.0;
-          
+            p.isExecuting = false;
             
             p.burstTime -= min(quantum, p.burstTime);
-            cout << p.responseTime << endl;
+           
             if (p.responseTime == 0 && p.arrivalTime>0)
             {
                 p.responseTime = currentTime - p.arrivalTime-quantum;
@@ -571,6 +573,7 @@ void UpdatenonPreemptiveSJF() {
     // Execute the process
     if (prevExecutingProcessIndex != -1) {
         Process& p = processes[prevExecutingProcessIndex];
+        p.isExecuting = true;
        
         float dx = cpu.x - p.x;
         float dy = cpu.y - p.y;
@@ -585,7 +588,7 @@ void UpdatenonPreemptiveSJF() {
             cpu.color[0] = 1.0;
             cpu.color[1] = 0.0;
             cpu.color[2] = 0.0;
-
+            p.isExecuting = false;
             // Execute the process for one time unit
 
 
@@ -704,6 +707,7 @@ void UpdateNonPreemptivePriorityScheduling() {
         if (prevExecutingProcessIndex != -1) {
             // Start executing the highest priority job
             Process& p = processes[prevExecutingProcessIndex];
+            p.isExecuting = true;
             float dx = cpu.x - p.x;
             float dy = cpu.y - p.y;
             float dist = sqrt(dx * dx + dy * dy);
@@ -717,7 +721,7 @@ void UpdateNonPreemptivePriorityScheduling() {
                 cpu.color[0] = 1.0;
                 cpu.color[1] = 0.0;
                 cpu.color[2] = 0.0;
-
+                p.isExecuting = false;
                 // Execute the process for one time unit
 
 
@@ -850,6 +854,7 @@ void UpdateNonPreemptivePriorityScheduling() {
             // Move the process towards the CPU
             if (prevExecutingProcessIndex != -1  ) {
                 Process& p = processes[prevExecutingProcessIndex];
+                p.isExecuting = true;
                 float dx = cpu.x - p.x;
                 float dy = cpu.y - p.y;
                 float dist = sqrt(dx * dx + dy * dy);
@@ -863,6 +868,7 @@ void UpdateNonPreemptivePriorityScheduling() {
                     cpu.color[0] = 1.0;
                     cpu.color[1] = 0.0;
                     cpu.color[2] = 0.0;
+                    p.isExecuting = false;
                     p.burstTime--;
                    
                    
@@ -982,7 +988,7 @@ void UpdateNonPreemptivePriorityScheduling() {
             });
 
 
-        // Check if any process has arrived and add it to the ready queue
+       
         // Check if any process has arrived and add it to the ready queue
         while (nextProcessIndex < processes.size()&& processes[nextProcessIndex].arrivalTime <= currentTime) {
            
@@ -1007,30 +1013,29 @@ void UpdateNonPreemptivePriorityScheduling() {
         // Check if no process is currently executing or context switch is needed
         if (prevExecutingProcessIndex == -1 && !readyQueue.empty()) {
 
-            // Print the queue before sorting
+         
 
                // Sort the ready queue based on burst time and arrival time
             sortQueueByPriorityAndBurst(readyQueue);
 
-            // Print the queue after sorting
+           
 
-              // Preempt current process
+             
             Process& p = readyQueue.front();
-            // Update Gantt chart and remove the process if pre-empted
-            // ...
+           
 
 
             // Update currently executing process
             p.isExecuting = true;
 
-            // Select the next process from the ready queue
 
+           
 
             prevExecutingProcessIndex = p.id - 1;
 
             currentTime++;
         
-            // Update response time if it's not set
+           
            
         }
 
@@ -1038,6 +1043,7 @@ void UpdateNonPreemptivePriorityScheduling() {
         // Move the process towards the CPU
         if (prevExecutingProcessIndex != -1) {
             Process& p = processes[prevExecutingProcessIndex];
+            p.isExecuting = true;
             float dx = cpu.x - p.x;
             float dy = cpu.y - p.y;
             float dist = sqrt(dx * dx + dy * dy);
@@ -1051,6 +1057,7 @@ void UpdateNonPreemptivePriorityScheduling() {
                 cpu.color[0] = 1.0;
                 cpu.color[1] = 0.0;
                 cpu.color[2] = 0.0;
+                p.isExecuting = false;
                 p.burstTime--;
                 cout << p.burstTime << endl;
                 if (p.responseTime == 0) {
@@ -1068,8 +1075,7 @@ void UpdateNonPreemptivePriorityScheduling() {
 
 
                 }
-                // Update Gantt chart and remove the process if completed
-                // ...
+              
 
                 else if (p.burstTime <= 0) {
 
@@ -1125,6 +1131,7 @@ void update() {
         UpdatePreemptivePriority();
         break;
     default:
+        exit(0);
         break;
     }
 
@@ -1217,12 +1224,39 @@ void display() {
     }
     stringstream pp;
     pp << "Average Waiting Time: " << Totalwaitingtime/numProcesses << " |  Average Turnaround Time: " << Totalturnaroundtime/numProcesses;
-    glRasterPos2f(240, 250);
+    glRasterPos2f(250, 250);
     string processText = pp.str();
 
     for (int j = 0; j < processText.length(); j++) {
         glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, processText[j]);
     }
+    float y = 200;
+
+    for (int i=0; i < processes.size(); i++)
+    {
+        string status;
+        stringstream ss;
+        Process& p = processes[i];
+        if (p.isExecuting == true)
+        {
+            status = "running";
+        }
+        else
+        {
+            status = "idle";
+        }
+        glRasterPos2f(280, y);
+        ss << "P" << p.pid << ":"<<status;
+        string processText = ss.str();
+
+        for (int j = 0; j < processText.length(); j++) {
+            glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, processText[j]);
+        }
+        y -= 20.0; // Move to the next line for the next process
+
+    }
+   
+   
     // Draw the ready queue
     drawReadyQueue();
     drawGanttChart();
@@ -1234,52 +1268,59 @@ void display() {
 int main(int argc, char** argv) {
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
-    glutInitWindowSize(800, 600);
+    glutInitWindowSize(900, 610);
     glutCreateWindow("Scheduling Algorithm Animation");
     init();
 
     // Select the scheduling algorithm
     cout << "Select Scheduling Algorithm:\n";
-    cout << "1. N Round Robin\n";
+    cout << "1. Round Robin\n";
     cout << "2. Non-preemptive SJF (Shortest Job First)\n";
     cout << "3. Non-preemptive Priority Scheduling\n";
     cout << "4. Preemptive SJF (Shortest Job First)\n";
     cout << "5. preemptive Priority Scheduling\n";
     cout << "Enter your choice (1/2/3/4/5): ";
     cin >> selectedAlgorithm;
-
-    // Take process details based on the selected algorithm
-    
-    
-    cout << "Enter the number of processes: ";
-    cin >> numProcesses;
-    cin.ignore();
-
-    for (int i = 0; i <numProcesses; i++) {
-        int pid, arrivalTime, burstTime, priority;
-        float color[3];
-        cout << "Enter process " << i + 1 << " details (pid, arrival, burst";
-        if (selectedAlgorithm == 2|| selectedAlgorithm == 4) {
-            cout << ", color R, G, B):): ";
-            cin >> pid >> arrivalTime >> burstTime >> color[0] >> color[1] >> color[2]; 
-            processes.push_back({0, pid, arrivalTime, burstTime,burstTime, 0, 0, 10, false, 0,0,0,0,{color[0], color[1], color[2]} });
-        }
-        else if (selectedAlgorithm == 3|| selectedAlgorithm == 5)
-        {
-            cout << ", priority, color R, G, B):): ";
-            cin >> pid >> arrivalTime >> burstTime >>priority >> color[0] >> color[1] >> color[2];
-            processes.push_back({0, pid, arrivalTime, burstTime,burstTime, 0, 0, 10, false, priority,0,0,0,{color[0], color[1], color[2]} });
-        }
-       else {
-            cout << ", color R, G, B):): ";
-            cin >> pid >> arrivalTime >> burstTime >> color[0] >> color[1] >> color[2];
-            processes.push_back({ 0,pid, arrivalTime, burstTime,burstTime, 0, 0, 10, false, 0,0,0,0,{color[0], color[1], color[2]} });
-        }
-    }
-    if (selectedAlgorithm == 1)
+    if (selectedAlgorithm != 1 && selectedAlgorithm != 2 && selectedAlgorithm != 3 && selectedAlgorithm != 4 && selectedAlgorithm != 5)
     {
-        cout << "enter quantum" << endl;
-        cin >> quantum;
+        cout << "invalid input";
+    }
+    else
+    {
+
+        // Take process details based on the selected algorithm
+
+
+        cout << "Enter the number of processes: ";
+        cin >> numProcesses;
+        cin.ignore();
+
+        for (int i = 0; i < numProcesses; i++) {
+            int pid, arrivalTime, burstTime, priority;
+            float color[3];
+            cout << "Enter process " << i + 1 << " details (pid, arrival, burst";
+            if (selectedAlgorithm == 2 || selectedAlgorithm == 4) {
+                cout << ", color R, G, B):): ";
+                cin >> pid >> arrivalTime >> burstTime >> color[0] >> color[1] >> color[2];
+                processes.push_back({ 0, pid, arrivalTime, burstTime,burstTime, 0, 0, 10, false, 0,0,0,0,{color[0], color[1], color[2]} });
+            }
+            else if (selectedAlgorithm == 3 || selectedAlgorithm == 5)
+            {
+                cout << ", priority, color R, G, B):): ";
+                cin >> pid >> arrivalTime >> burstTime >> priority >> color[0] >> color[1] >> color[2];
+                processes.push_back({ 0, pid, arrivalTime, burstTime,burstTime, 0, 0, 10, false, priority,0,0,0,{color[0], color[1], color[2]} });
+            }
+            else {
+                cout << ", color R, G, B):): ";
+                cin >> pid >> arrivalTime >> burstTime >> color[0] >> color[1] >> color[2];
+                processes.push_back({ 0,pid, arrivalTime, burstTime,burstTime, 0, 0, 10, false, 0,0,0,0,{color[0], color[1], color[2]} });
+            }
+        }
+        if (selectedAlgorithm == 1)
+        {
+            cout << "enter quantum" << endl;
+            cin >> quantum;
+        }
     }
 
     // Sort the processes based on arrival time
