@@ -50,11 +50,14 @@ GanttChart ganttChart;
 queue<Process> readyQueue;
 priority_queue<Process> priorityQueue;
 int currentTime = 0; // Current time
+
 int nextProcessIndex = 0; // Index of the next process to execute
 int prevExecutingProcessIndex = -1;
 int selectedAlgorithm = 1; // Selected scheduling algorithm: 1 = RR, 2 = SJF, 3 = Priority
 int quantum = 0;
 int numProcesses;
+int delayCounter = 0;
+const int DELAY_TIME = 1000;
 
 
 // Function prototypes
@@ -65,6 +68,7 @@ void update();
 void display();
 void keyboard(unsigned char key, int x, int y);
 void init();
+void mainLoop();
 void UpdateRoundRobin();
 void UpdatenonPreemptiveSJF();
 void UpdatePreemptiveSJF();
@@ -113,7 +117,7 @@ void drawReadyQueue() {
     glEnd();
 
     // Display text label for the ready queue
-    glColor3f(0.0, 0.0, 0.0); // Black color for text
+    glColor3f(0.8, 1.0, 0.0); // Black color for text
     glRasterPos2f(55, 80); // Position for text
 
     // Draw each character of the label string
@@ -160,7 +164,7 @@ void drawGanttChart() {
     {
         glColor3fv(ganttChart.color);
         drawRectangle(ganttChart.x, ganttChart.y, ganttChart.width, ganttChart.height);
-        glColor3f(0.0, 0.0, 0.0); // Set text color to white
+        glColor3f(0.8, 1.0, 0.0); // Set text color to white
         glRasterPos2f(ganttChart.x + ganttChart.width / 2 - 10, ganttChart.y + ganttChart.height +5); // Position the text
         string text = "GanntChart";
         for (int i = 0; i < text.length(); i++) {
@@ -223,7 +227,7 @@ void drawGanttChart() {
     {
         glColor3fv(ganttChart.color);
         drawRectangle(ganttChart.x, ganttChart.y, ganttChart.width, ganttChart.height);
-        glColor3f(0.0, 0.0, 0.0); // Set text color to white
+        glColor3f(0.8, 1.0, 0.0); // Set text color to white
         glRasterPos2f(ganttChart.x + ganttChart.width / 2 - 10, ganttChart.y + ganttChart.height + 5); // Position the text
         string text = "GanntChart";
         for (int i = 0; i < text.length(); i++) {
@@ -286,7 +290,12 @@ void drawGanttChart() {
     {
         glColor3fv(ganttChart.color);
         drawRectangle(ganttChart.x, ganttChart.y, ganttChart.width, ganttChart.height);
-
+        glColor3f(0.8, 1.0, 0.0); // Set text color to white
+        glRasterPos2f(ganttChart.x + ganttChart.width / 2 - 10, ganttChart.y + ganttChart.height + 5); // Position the text
+        string text = "GanntChart";
+        for (int i = 0; i < text.length(); i++) {
+            glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, text[i]);
+        }
         // Draw vertical lines representing divisions based on number of processes
        // Number of processes
         float divisionWidth = ganttChart.width / numProcesses;
@@ -369,13 +378,13 @@ void keyboard(unsigned char key, int x, int y) {
 // Function to initialize OpenGL
 void init() {
     // Set up the CPU
-    cpu.x = 200;
+    cpu.x = 210;
     cpu.y = 100;
     cpu.width = 50;
     cpu.height = 100;
-    cpu.color[0] = 0.0;
-    cpu.color[1] = 1.0;
-    cpu.color[2] = 0.0;
+    cpu.color[0] = 0.6;
+    cpu.color[1] = 0.2;
+    cpu.color[2] = 0.4;
 
     // Set up the Gantt chart
     ganttChart.x = 175;
@@ -387,7 +396,7 @@ void init() {
     ganttChart.color[2] = 1.0;
 
     // Set up the OpenGL window
-    glClearColor(1.0, 1.0, 1.0, 1.0);
+    glClearColor(0.0, 0.0, 0.0, 1.0);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho(0, 400, 0, 300, -1, 1);
@@ -458,7 +467,7 @@ void UpdateRoundRobin() {
             cpu.color[1] = 0.0;
             cpu.color[2] = 0.0;
             p.isExecuting = false;
-            
+           
             p.burstTime -= min(quantum, p.burstTime);
            
             if (p.responseTime == 0 && p.arrivalTime>0)
@@ -491,19 +500,18 @@ void UpdateRoundRobin() {
                 p.x = -200 - prevExecutingProcessIndex * 20; // Initial x position
                 p.y = 100; // Initial y position
                 prevExecutingProcessIndex = -1; // Reset the currently executing process index to allow context switching
-                cpu.color[0] = 0.0;
-                cpu.color[1] = 1.0;
-                cpu.color[2] = 0.0;
+                cpu.color[0] = 0.6;
+                cpu.color[1] = 0.2;
+                cpu.color[2] = 0.4;
             }
            
-            
         }
     }
     else
     {
-        cpu.color[0] = 0.0;
-        cpu.color[1] = 1.0;
-        cpu.color[2] = 0.0;
+        cpu.color[0] = 0.6;
+        cpu.color[1] = 0.2;
+        cpu.color[2] = 0.4;
     }
 
     // Update the display
@@ -573,7 +581,7 @@ void UpdatenonPreemptiveSJF() {
     // Execute the process
     if (prevExecutingProcessIndex != -1) {
         Process& p = processes[prevExecutingProcessIndex];
-        p.isExecuting = true;
+      
        
         float dx = cpu.x - p.x;
         float dy = cpu.y - p.y;
@@ -588,7 +596,7 @@ void UpdatenonPreemptiveSJF() {
             cpu.color[0] = 1.0;
             cpu.color[1] = 0.0;
             cpu.color[2] = 0.0;
-            p.isExecuting = false;
+           
             // Execute the process for one time unit
 
 
@@ -600,6 +608,7 @@ void UpdatenonPreemptiveSJF() {
                 ganttChart.chart.push_back({ p.pid, make_tuple(p.arrivalTime,currentTime,p.color) });
                 p.x = -200 - prevExecutingProcessIndex * 20; // Initial x position
                 p.y = 100; // Initial y position
+               
                 prevExecutingProcessIndex = -1;
 
             }
@@ -617,9 +626,9 @@ void UpdatenonPreemptiveSJF() {
     }
     else {
 
-        cpu.color[0] = 0.0; // Keep CPU color red
-        cpu.color[1] = 1.0;
-        cpu.color[2] = 0.0;
+        cpu.color[0] = 0.6;
+        cpu.color[1] = 0.2;
+        cpu.color[2] = 0.4;
     }
   // Update the display
     glutPostRedisplay();
@@ -707,7 +716,7 @@ void UpdateNonPreemptivePriorityScheduling() {
         if (prevExecutingProcessIndex != -1) {
             // Start executing the highest priority job
             Process& p = processes[prevExecutingProcessIndex];
-            p.isExecuting = true;
+            
             float dx = cpu.x - p.x;
             float dy = cpu.y - p.y;
             float dist = sqrt(dx * dx + dy * dy);
@@ -721,7 +730,7 @@ void UpdateNonPreemptivePriorityScheduling() {
                 cpu.color[0] = 1.0;
                 cpu.color[1] = 0.0;
                 cpu.color[2] = 0.0;
-                p.isExecuting = false;
+               
                 // Execute the process for one time unit
 
 
@@ -739,10 +748,9 @@ void UpdateNonPreemptivePriorityScheduling() {
 
             }
             else {
-
-                cpu.color[0] = 0.0; // Keep CPU color red
-                cpu.color[1] = 1.0;
-                cpu.color[2] = 0.0;
+                cpu.color[0] = 0.6;
+                cpu.color[1] = 0.2;
+                cpu.color[2] = 0.4;
             }
 
 
@@ -750,9 +758,9 @@ void UpdateNonPreemptivePriorityScheduling() {
         }
         else {
 
-            cpu.color[0] = 0.0; // Keep CPU color red
-            cpu.color[1] = 1.0;
-            cpu.color[2] = 0.0;
+            cpu.color[0] = 0.6;
+            cpu.color[1] = 0.2;
+            cpu.color[2] = 0.4;
         }
 
       // Update the display
@@ -910,17 +918,17 @@ void UpdateNonPreemptivePriorityScheduling() {
                 }
                 else {
 
-                    cpu.color[0] = 0.0; // Keep CPU color red
-                    cpu.color[1] = 1.0;
-                    cpu.color[2] = 0.0;
+                    cpu.color[0] = 0.6;
+                    cpu.color[1] = 0.2;
+                    cpu.color[2] = 0.4;
                 }
 
             }
             else {
 
-                cpu.color[0] = 0.0; // Keep CPU color red
-                cpu.color[1] = 1.0;
-                cpu.color[2] = 0.0;
+                cpu.color[0] = 0.6;
+                cpu.color[1] = 0.2;
+                cpu.color[2] = 0.4;
             }
         
 
@@ -1088,23 +1096,22 @@ void UpdateNonPreemptivePriorityScheduling() {
                     p.x = -200 - prevExecutingProcessIndex * 20; // Initial x position
                     p.y = 100; // Initial y position
                     prevExecutingProcessIndex = -1; // Reset the currently executing process index to allow context switching
-                    cpu.color[0] = 0.0;
-                    cpu.color[1] = 1.0;
-                    cpu.color[2] = 0.0;
+                    cpu.color[0] = 0.6;
+                    cpu.color[1] = 0.2;
+                    cpu.color[2] = 0.4;
                 }
             }
             else {
-
-                cpu.color[0] = 0.0; // Keep CPU color red
-                cpu.color[1] = 1.0;
-                cpu.color[2] = 0.0;
+                cpu.color[0] = 0.6;
+                cpu.color[1] = 0.2;
+                cpu.color[2] = 0.4;
             }
         }
         else {
 
-            cpu.color[0] = 0.0; // Keep CPU color red
-            cpu.color[1] = 1.0;
-            cpu.color[2] = 0.0;
+            cpu.color[0] = 0.6;
+            cpu.color[1] = 0.2;
+            cpu.color[2] = 0.4;
         }
 
         // Update the display
@@ -1131,14 +1138,88 @@ void update() {
         UpdatePreemptivePriority();
         break;
     default:
-        exit(0);
+        
         break;
+    }
+    if (currentTime >= totaltime) {
+        if (delayCounter < DELAY_TIME)
+        {
+            delayCounter++;
+        }
+        else
+        {
+            // Once the current algorithm completes, reset and allow new selection
+     
+            processes.clear();
+            ganttChart.chart.clear();
+            selectedAlgorithm = 0;
+            numProcesses = 0;
+            quantum = 0;
+            currentTime = 0;
+            nextProcessIndex = 0;
+            prevExecutingProcessIndex = -1;
+            totaltime = 0.0;
+            cout << "Algorithm run complete. Please select a new algorithm." << endl;
+            mainLoop();
+        }
     }
 
     // Update the display
     glutPostRedisplay();
 }
+void drawText(float x, float y, const string& text) {
+    glRasterPos2f(x, y);
+    for (char c : text) {
+        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_10, c);
+    }
+}
 
+void displayTable() {
+    float startX = 5;
+    float startY = 250;
+    float rowHeight = 10;
+    float colWidth = 34;
+
+   
+    glColor3f(1.0, 1.0, 1.0);
+    // Draw table headers
+    drawText(startX, startY+1, "Process");
+    drawText(startX + colWidth, startY+1, "Arrival Time");
+    drawText(startX + 2 * colWidth, startY+1, "Burst Time");
+    drawText(startX + 3 * colWidth, startY+1, "Waiting Time");
+    drawText(startX + 4 * colWidth, startY+1, "TurnAround Time");
+    drawText(startX + 5 * colWidth, startY+1, "Response Time");
+    // Draw table rows
+    for (int i = 0; i < processes.size(); i++) {
+        Process& p = processes[i];
+        vector<float> colorVector = { p.color[0], p.color[1], p.color[2] };
+        glColor3fv(colorVector.data());// Blue color for processes
+        float y = startY - (i + 1) * rowHeight;
+        drawText(startX+17, y+3, to_string(p.pid));
+        drawText(startX +17+ colWidth, y+3, to_string(p.arrivalTime));
+        drawText(startX +17+ 2 * colWidth, y+3, to_string(p.burstTime));
+        drawText(startX +17+ 3 * colWidth, y+3, to_string(p.waitingTime));
+        drawText(startX +17+ 4 * colWidth, y+3, to_string(p.turnaroundTime));
+        drawText(startX +17+ 5 * colWidth, y+3, to_string(p.responseTime));
+
+    }
+    glColor3f(0.0, 1.0, 0.0);
+    // Draw table grid
+    for (int i = 0; i <= processes.size(); i++) {
+        float y = startY - i * rowHeight;
+        glBegin(GL_LINES);
+        glVertex2f(startX, y);
+        glVertex2f(startX + 6 * colWidth, y);
+        glEnd();
+    }
+    for (int i = 0; i <= 6; i++) {
+        float x = startX + i * colWidth;
+        glBegin(GL_LINES);
+        glVertex2f(x, startY);
+        glVertex2f(x, startY - (processes.size() ) * rowHeight);
+        glEnd();
+    }
+}
 // Function to display the animation
 void display() {
     glClear(GL_COLOR_BUFFER_BIT);
@@ -1146,15 +1227,15 @@ void display() {
     // Draw the CPU
     glColor3fv(cpu.color);
     drawRectangle(cpu.x, cpu.y, cpu.width, cpu.height);
-    glColor3f(1.0, 1.0, 1.0); // Set text color to white
+    glColor3f(0.8, 1.0, 0.0); // Set text color to white
     glRasterPos2f(cpu.x + cpu.width / 2 - 10, cpu.y + cpu.height / 2); // Position the text
     string text = "CPU";
     for (int i = 0; i < text.length(); i++) {
-        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, text[i]);
+        glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, text[i]);
     }
     if (selectedAlgorithm == 1) {
         glColor3f(1.0, 0.0, 0.0); // Set text color to white
-        glRasterPos2f(140, 270); // Position the text
+        glRasterPos2f(150, 270); // Position the text
         string text = "Round Robin Scheduling";
         for (int i = 0; i < text.length(); i++) {
             glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, text[i]);
@@ -1206,131 +1287,181 @@ void display() {
         vector<float> colorVector = { p.color[0], p.color[1], p.color[2] };
         glColor3fv(colorVector.data());// Blue color for processes
         drawCircle(p.x, p.y, p.radius, p.pid);
-        glColor3fv(colorVector.data());
-        stringstream ss;
-        pid = p.pid;
+       
         Totalwaitingtime += p.waitingTime;
         Totalturnaroundtime += p.turnaroundTime;
-        ss << "PID: " << pid << " | Waiting Time: " << p.waitingTime << " | Turnaround Time: " << p.turnaroundTime << "|Response Time:" << p.responseTime;
-        glRasterPos2f(20.0, yPos);
-
-        string processText = ss.str();
-        
-        for (int j = 0; j < processText.length(); j++) {
-            glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, processText[j]);
-        }
-        yPos -= 20.0; // Move to the next line for the next process
+        // Move to the next line for the next process
 
     }
+    glColor3f(0.0, 0.0, 1.0);
     stringstream pp;
     pp << "Average Waiting Time: " << Totalwaitingtime/numProcesses << " |  Average Turnaround Time: " << Totalturnaroundtime/numProcesses;
-    glRasterPos2f(250, 250);
+    glRasterPos2f(260, 250);
     string processText = pp.str();
 
     for (int j = 0; j < processText.length(); j++) {
         glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, processText[j]);
     }
-    float y = 200;
-
-    for (int i=0; i < processes.size(); i++)
+    float y = 180;
+    if (selectedAlgorithm == 1 || selectedAlgorithm > 3)
     {
-        string status;
-        stringstream ss;
-        Process& p = processes[i];
-        if (p.isExecuting == true)
+        for (int i = 0; i < processes.size(); i++)
         {
-            status = "running";
-        }
-        else
-        {
-            status = "idle";
-        }
-        glRasterPos2f(280, y);
-        ss << "P" << p.pid << ":"<<status;
-        string processText = ss.str();
+            string status;
+            stringstream ss;
+            Process& p = processes[i];
+            if (p.isExecuting == true)
+            {
+                status = "running";
+            }
+            else
+            {
+                if (p.burstTime == 0)
+                {
+                    status = "completed";
+                }
+                else if (p.arrivalTime > currentTime)
+                {
+                    status = "not yet arrived";
+                }
+                else
+                {
+                    status = "waiting";
+                }
 
-        for (int j = 0; j < processText.length(); j++) {
-            glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, processText[j]);
-        }
-        y -= 20.0; // Move to the next line for the next process
 
+            }
+            glRasterPos2f(270, y);
+            ss << "P" << p.pid << ":" << status;
+            string processText = ss.str();
+
+            for (int j = 0; j < processText.length(); j++) {
+                glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, processText[j]);
+            }
+            y -= 20.0; // Move to the next line for the next process
+
+        }
     }
-   
+    else
+    {
+        for (int i = 0; i < processes.size(); i++)
+        {
+            string status;
+            stringstream ss;
+            Process& p = processes[i];
+            if (p.burstTime<p.originalBurstTime)
+            {
+                if (p.burstTime == 0)
+                {
+                    status = "completed";
+                }
+                else
+                {
+                    status = "running";
+                }
+            }
+            else
+            {
+                if (p.arrivalTime > currentTime)
+                {
+                    status = "not yet arrived";
+               }
+                else
+                {
+                    status = "waiting";
+                }
+              
+
+            }
+            glRasterPos2f(270, y);
+            ss << "P" << p.pid << ":" << status;
+            string processText = ss.str();
+
+            for (int j = 0; j < processText.length(); j++) {
+                glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, processText[j]);
+            }
+            y -= 20.0; // Move to the next line for the next process
+
+        }
+    }
+
    
     // Draw the ready queue
     drawReadyQueue();
     drawGanttChart();
+    displayTable();
    
 
     glutSwapBuffers();
 }
+void mainLoop() {
+    while (true) {
+        // Select the scheduling algorithm
+        cout << "Select Scheduling Algorithm:\n";
+        cout << "1. Round Robin\n";
+        cout << "2. Non-preemptive SJF (Shortest Job First)\n";
+        cout << "3. Non-preemptive Priority Scheduling\n";
+        cout << "4. Preemptive SJF (Shortest Job First)\n";
+        cout << "5. Preemptive Priority Scheduling\n";
+        cout << "Enter your choice (1/2/3/4/5): ";
+        cin >> selectedAlgorithm;
 
-int main(int argc, char** argv) {
-    glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
-    glutInitWindowSize(900, 610);
-    glutCreateWindow("Scheduling Algorithm Animation");
-    init();
-
-    // Select the scheduling algorithm
-    cout << "Select Scheduling Algorithm:\n";
-    cout << "1. Round Robin\n";
-    cout << "2. Non-preemptive SJF (Shortest Job First)\n";
-    cout << "3. Non-preemptive Priority Scheduling\n";
-    cout << "4. Preemptive SJF (Shortest Job First)\n";
-    cout << "5. preemptive Priority Scheduling\n";
-    cout << "Enter your choice (1/2/3/4/5): ";
-    cin >> selectedAlgorithm;
-    if (selectedAlgorithm != 1 && selectedAlgorithm != 2 && selectedAlgorithm != 3 && selectedAlgorithm != 4 && selectedAlgorithm != 5)
-    {
-        cout << "invalid input";
-    }
-    else
-    {
+        if (selectedAlgorithm < 1 || selectedAlgorithm > 5) {
+            cout << "Invalid input. Please try again.\n";
+            continue;
+        }
 
         // Take process details based on the selected algorithm
-
-
         cout << "Enter the number of processes: ";
         cin >> numProcesses;
         cin.ignore();
 
         for (int i = 0; i < numProcesses; i++) {
-            int pid, arrivalTime, burstTime, priority;
+            int pid, arrivalTime, burstTime, priority = 0;
             float color[3];
             cout << "Enter process " << i + 1 << " details (pid, arrival, burst";
             if (selectedAlgorithm == 2 || selectedAlgorithm == 4) {
-                cout << ", color R, G, B):): ";
+                cout << ", color R, G, B): ";
                 cin >> pid >> arrivalTime >> burstTime >> color[0] >> color[1] >> color[2];
                 processes.push_back({ 0, pid, arrivalTime, burstTime,burstTime, 0, 0, 10, false, 0,0,0,0,{color[0], color[1], color[2]} });
             }
-            else if (selectedAlgorithm == 3 || selectedAlgorithm == 5)
-            {
-                cout << ", priority, color R, G, B):): ";
+            else if (selectedAlgorithm == 3 || selectedAlgorithm == 5) {
+                cout << ", priority, color R, G, B): ";
                 cin >> pid >> arrivalTime >> burstTime >> priority >> color[0] >> color[1] >> color[2];
                 processes.push_back({ 0, pid, arrivalTime, burstTime,burstTime, 0, 0, 10, false, priority,0,0,0,{color[0], color[1], color[2]} });
             }
             else {
-                cout << ", color R, G, B):): ";
+                cout << ", color R, G, B): ";
                 cin >> pid >> arrivalTime >> burstTime >> color[0] >> color[1] >> color[2];
                 processes.push_back({ 0,pid, arrivalTime, burstTime,burstTime, 0, 0, 10, false, 0,0,0,0,{color[0], color[1], color[2]} });
             }
         }
-        if (selectedAlgorithm == 1)
-        {
-            cout << "enter quantum" << endl;
+
+        if (selectedAlgorithm == 1) {
+            cout << "Enter quantum: ";
             cin >> quantum;
         }
-    }
 
-    // Sort the processes based on arrival time
-   
-    totaltime = totalTime();
-    glutDisplayFunc(display);
-    glutKeyboardFunc(keyboard);
-    glutIdleFunc(update);
-    glutMainLoop();
-    return 0;
+        // Sort the processes based on arrival time
+        totaltime = totalTime();
+
+        // Run the scheduling algorithm
+        glutDisplayFunc(display);
+        glutKeyboardFunc(keyboard);
+        glutIdleFunc(update);
+        glutMainLoop();
+    }
 }
 
+int main(int argc, char** argv) {
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
+    glutInitWindowSize(920, 610);
+    glutCreateWindow("Scheduling Algorithm Animation");
+    init();
+
+    mainLoop();
+
+    return 0;
+}
 
