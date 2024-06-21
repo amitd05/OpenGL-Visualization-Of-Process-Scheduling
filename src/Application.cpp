@@ -18,9 +18,10 @@ struct Process {
     int arrivalTime; // Arrival time
     int burstTime; // Burst time
     int originalBurstTime;
-    int x, y; // Position of the process
+    float x, y; // Position of the process
     float radius; // Radius of the process circle
     bool isExecuting; // Is the process currently executing?
+    bool Executing;
     int priority;// Priority of the process
     int waitingTime; // Waiting time for the process
     int turnaroundTime; // Turnaround time for the process
@@ -48,7 +49,7 @@ vector<Process> processes; // List of processes
 CPU cpu; // CPU object
 GanttChart ganttChart;
 queue<Process> readyQueue;
-priority_queue<Process> priorityQueue;
+
 int currentTime = 0; // Current time
 
 int nextProcessIndex = 0; // Index of the next process to execute
@@ -60,7 +61,7 @@ int delayCounter = 0;
 const int DELAY_TIME = 1000;
 
 
-// Function prototypes
+// Functions
 void drawCircle(float x, float y, float radius, int pid);
 void drawRectangle(float x, float y, float width, float height);
 void drawGanttChart();
@@ -110,15 +111,15 @@ void drawReadyQueue() {
 
     // Draw the outline of the ready queue
     glBegin(GL_LINE_LOOP);
-    glVertex2f(50, 20); // Top-left corner
-    glVertex2f(150, 20); // Top-right corner
-    glVertex2f(150, 70); // Bottom-right corner
-    glVertex2f(50, 70); // Bottom-left corner
+    glVertex2f(50, 5); // Top-left corner
+    glVertex2f(150, 5); // Top-right corner
+    glVertex2f(150, 35); // Bottom-right corner
+    glVertex2f(50, 35); // Bottom-left corner
     glEnd();
 
     // Display text label for the ready queue
     glColor3f(0.8, 1.0, 0.0); // Black color for text
-    glRasterPos2f(55, 80); // Position for text
+    glRasterPos2f(55, 40); // Position for text
 
     // Draw each character of the label string
     const char* label = "Ready Queue";
@@ -128,7 +129,7 @@ void drawReadyQueue() {
 
     // Draw the processes in the ready queue without removing them
     int xPos = 65; // Initial x-position for process circles
-    int yPos = 50; // Initial y-position for process circles
+    int yPos = 20; // Initial y-position for process circles
     int count = readyQueue.size(); // Number of processes in the ready queue
 
     // Create a temporary queue to hold the processes while drawing
@@ -172,8 +173,6 @@ void drawGanttChart() {
         }
 
       
-        // Draw vertical lines representing divisions based on number of processes
-       // Number of processes
      
         float divisionWidth = ganttChart.width / ((totaltime/quantum)+1);
 
@@ -207,7 +206,7 @@ void drawGanttChart() {
             glEnd();
 
             // Draw the process ID above the bar
-            glColor3f(0.0, 0.0, 0.0); // Black color for process IDs
+            glColor3f(0.0, 0.0, 1.0); // Black color for process IDs
             char str[20];
             sprintf_s(str, "P%d", pid);
             glRasterPos2f(startX + barWidth / 2 - 5, y + 10);
@@ -235,8 +234,7 @@ void drawGanttChart() {
         }
 
        
-        // Draw vertical lines representing divisions based on number of processes
-       // Number of processes
+       
 
         float divisionWidth = ganttChart.width / ganttChart.chart.size();
 
@@ -270,7 +268,7 @@ void drawGanttChart() {
             glEnd();
 
             // Draw the process ID above the bar
-            glColor3f(0.0, 0.0, 0.0); // Black color for process IDs
+            glColor3f(0.0, 0.0, 1.0); // Black color for process IDs
             char str[20];
             sprintf_s(str, "P%d", pid);
             glRasterPos2f(startX + barWidth / 2 - 5, y + 10);
@@ -290,14 +288,13 @@ void drawGanttChart() {
     {
         glColor3fv(ganttChart.color);
         drawRectangle(ganttChart.x, ganttChart.y, ganttChart.width, ganttChart.height);
-        glColor3f(0.8, 1.0, 0.0); // Set text color to white
+        glColor3f(0.8, 1.0, 0.0); 
         glRasterPos2f(ganttChart.x + ganttChart.width / 2 - 10, ganttChart.y + ganttChart.height + 5); // Position the text
         string text = "GanntChart";
         for (int i = 0; i < text.length(); i++) {
             glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, text[i]);
         }
-        // Draw vertical lines representing divisions based on number of processes
-       // Number of processes
+      
         float divisionWidth = ganttChart.width / numProcesses;
 
         glColor3f(0.5, 0.5, 0.5); // Gray color for division lines
@@ -330,7 +327,7 @@ void drawGanttChart() {
             glEnd();
 
             // Draw the process ID above the bar
-            glColor3f(0.0, 0.0, 0.0); // Black color for process IDs
+            glColor3f(0.0, 0.0, 1.0); // Black color for process IDs
             char str[20];
             sprintf_s(str, "P%d", pid);
             glRasterPos2f(startX + barWidth / 2 - 5, y + 10);
@@ -388,7 +385,7 @@ void init() {
 
     // Set up the Gantt chart
     ganttChart.x = 175;
-    ganttChart.y = 20;
+    ganttChart.y = 5;
     ganttChart.width = 200;
     ganttChart.height = 50;
     ganttChart.color[0] = 0.0;
@@ -412,8 +409,8 @@ void UpdateRoundRobin() {
     // Check if any process has arrived and add it to the ready queue
     while (nextProcessIndex < processes.size() && processes[nextProcessIndex].arrivalTime <= currentTime) {
         Process p = processes[nextProcessIndex];
-        p.x = -200 - nextProcessIndex * 20; // Initial x position
-        p.y = 100; // Initial y position
+        p.x = 65 + (readyQueue.size() * 25); // Initial x position in the ready queue
+        p.y = -10; // Initial y position in the ready queue
         p.radius = 10; // Radius of the process circle
         p.isExecuting = false;
         p.id = nextProcessIndex + 1;// Set process ID using index
@@ -452,59 +449,81 @@ void UpdateRoundRobin() {
         p.isExecuting = true;
         
         // Calculate the distance to move the process towards the CPU
-        float dx = cpu.x - p.x;
-        float dy = cpu.y - p.y;
-        float dist = sqrt(dx * dx + dy * dy);
-
-        // Move the process towards the CPU
-        p.x += dx / dist * 1;
-        p.y += dy / dist * 1;
-
-        // Check if the process has reached the CPU
-        if (p.x >= cpu.x - 20 && p.x <= cpu.x + 20 && p.y >= cpu.y - 20 && p.y <= cpu.y + 20) {
-            // Execute the process for one time unit (quantum)
-            cpu.color[0] = 1.0;
-            cpu.color[1] = 0.0;
-            cpu.color[2] = 0.0;
-            p.isExecuting = false;
+       
+        if (p.y < 20&&p.x>65)
+        {
            
-            p.burstTime -= min(quantum, p.burstTime);
+            p.x -= 1;
+        }
+        else if (p.y < 20)
+        {
+            p.y += 1;
+        }
+        else if (p.x > 10 && p.y < cpu.y) { // Move backward to the start of the queue
+            p.x -= 1;
            
-            if (p.responseTime == 0 && p.arrivalTime>0)
-            {
-                p.responseTime = currentTime - p.arrivalTime-quantum;
+        }
+        else if (p.y < cpu.y)
+        {
+            p.y += 1;
+        }
+        else {
+            float dx = cpu.x - p.x;
+            float dy = cpu.y - p.y;
+            float dist = sqrt(dx * dx + dy * dy);
+            // Move the process towards the CPU
+            cout << p.x << endl;
+            p.x += dx / dist * 1;
+            p.y += dy / dist * 1;
+            cout << p.x<<endl;
+
+            // Check if the process has reached the CPU
+            if (p.x >= cpu.x - 20 && p.x <= cpu.x + 20 && p.y >= cpu.y - 20 && p.y <= cpu.y + 20) {
+                // Execute the process for one time unit (quantum)
+                cpu.color[0] = 1.0;
+                cpu.color[1] = 0.0;
+                cpu.color[2] = 0.0;
+                p.isExecuting = false;
+
+                p.burstTime -= min(quantum, p.burstTime);
+
+                if (p.responseTime == 0 && p.arrivalTime > 0)
+                {
+                    p.responseTime = currentTime - p.arrivalTime - quantum;
+                }
+                if (p.burstTime != 0)
+                {
+                    ganttChart.chart.push_back({ p.pid, make_tuple(p.arrivalTime, currentTime, p.color) });
+                    readyQueue.pop();
+                    readyQueue.push(p);
+                    p.x = 65 + (readyQueue.size() * 25); // Initial x position in the ready queue
+                    p.y = -10; // Initial y position in the ready queue
+                    prevExecutingProcessIndex = -1;
+
+
+                }
+
+
+
+                // If the process has completed execution, update Gantt chart and remove the process
+                else if (p.burstTime == 0) {
+
+                    ganttChart.chart.push_back({ p.pid, make_tuple(p.arrivalTime, currentTime, p.color) });
+                    readyQueue.pop();
+
+                    p.turnaroundTime = currentTime - p.arrivalTime;
+                    p.waitingTime = p.turnaroundTime - p.originalBurstTime;
+                    // Remove the process from the processes vector
+                    p.x = -200 - nextProcessIndex * 20; // Initial x position
+                    p.y = 100; // Initial y position
+                    prevExecutingProcessIndex = -1; // Reset the currently executing process index to allow context switching
+                    cpu.color[0] = 0.6;
+                    cpu.color[1] = 0.2;
+                    cpu.color[2] = 0.4;
+                }
+
             }
-            if (p.burstTime != 0)
-            {
-                ganttChart.chart.push_back({ p.pid, make_tuple(p.arrivalTime, currentTime, p.color) });
-                readyQueue.pop();
-                readyQueue.push(p);
-                p.x = -200 - prevExecutingProcessIndex * 20; // Initial x position
-                p.y = 100; // Initial y position
-                prevExecutingProcessIndex = -1;
 
-
-            }
-           
-          
-           
-            // If the process has completed execution, update Gantt chart and remove the process
-            else if (p.burstTime == 0) {
-              
-                ganttChart.chart.push_back({ p.pid, make_tuple(p.arrivalTime, currentTime, p.color) });
-                readyQueue.pop(); 
-               
-                p.turnaroundTime = currentTime - p.arrivalTime;
-                p.waitingTime = p.turnaroundTime - p.originalBurstTime;
-                // Remove the process from the processes vector
-                p.x = -200 - prevExecutingProcessIndex * 20; // Initial x position
-                p.y = 100; // Initial y position
-                prevExecutingProcessIndex = -1; // Reset the currently executing process index to allow context switching
-                cpu.color[0] = 0.6;
-                cpu.color[1] = 0.2;
-                cpu.color[2] = 0.4;
-            }
-           
         }
     }
     else
@@ -549,10 +568,11 @@ void UpdatenonPreemptiveSJF() {
     while (nextProcessIndex < processes.size() && processes[nextProcessIndex].arrivalTime <= currentTime) {
         // Create a new process
         Process p = processes[nextProcessIndex];
-        p.x = -200 - nextProcessIndex * 20; // Initial x position
-        p.y = 100; // Initial y position
+        p.x = 65 + (readyQueue.size() * 25); // Initial x position in the ready queue
+        p.y = -10; // Initial y position in the ready queue
         p.radius = 10; // Radius of the process circle
         p.isExecuting = false;
+        readyQueue.push(p);
         processes[nextProcessIndex] = p;
         nextProcessIndex++;
     }
@@ -581,48 +601,68 @@ void UpdatenonPreemptiveSJF() {
     // Execute the process
     if (prevExecutingProcessIndex != -1) {
         Process& p = processes[prevExecutingProcessIndex];
-      
-       
-        float dx = cpu.x - p.x;
-        float dy = cpu.y - p.y;
-        float dist = sqrt(dx * dx + dy * dy);
+        p.Executing = true;
+        if (p.y < 20 && p.x>65)
+        {
 
-        // Move the process towards the CPU
-        p.x += dx / dist * 1;
-        p.y += dy / dist * 1;
+            p.x -= 1;
+        }
+        else if (p.y < 20)
+        {
+            p.y += 1;
+        }
+        else if (p.x > 10 && p.y < cpu.y)
+        {
+            p.x -= 1;
+        }
+        else if (p.y < cpu.y)
+        {
+            p.y += 1;
+        }
+        else
+        {
+            float dx = cpu.x - p.x;
+            float dy = cpu.y - p.y;
+            float dist = sqrt(dx * dx + dy * dy);
 
-        // Check if the process has reached the CPU
-        if (p.x >= cpu.x - 20 && p.x <= cpu.x + 20 && p.y >= cpu.y - 20 && p.y <= cpu.y + 20) {
-            cpu.color[0] = 1.0;
-            cpu.color[1] = 0.0;
-            cpu.color[2] = 0.0;
-           
-            // Execute the process for one time unit
+            // Move the process towards the CPU
+            p.x += dx / dist * 1;
+            p.y += dy / dist * 1;
+
+            // Check if the process has reached the CPU
+            if (p.x >= cpu.x - 20 && p.x <= cpu.x + 20 && p.y >= cpu.y - 20 && p.y <= cpu.y + 20) {
+                cpu.color[0] = 1.0;
+                cpu.color[1] = 0.0;
+                cpu.color[2] = 0.0;
+                p.Executing = false;
+                // Execute the process for one time unit
 
 
-            p.burstTime--;
-            cout << currentTime << endl;
+                p.burstTime--;
+                
 
-            // If the process has completed execution, update Gantt chart and remove the process
-            if (p.burstTime == 0) {
-                ganttChart.chart.push_back({ p.pid, make_tuple(p.arrivalTime,currentTime,p.color) });
-                p.x = -200 - prevExecutingProcessIndex * 20; // Initial x position
-                p.y = 100; // Initial y position
-               
-                prevExecutingProcessIndex = -1;
+                // If the process has completed execution, update Gantt chart and remove the process
+                if (p.burstTime == 0) {
+                    ganttChart.chart.push_back({ p.pid, make_tuple(p.arrivalTime,currentTime,p.color) });
+                    readyQueue.pop();
+                    p.x = -200 - prevExecutingProcessIndex * 20; // Initial x position
+                    p.y = 100; // Initial y position
+
+                    prevExecutingProcessIndex = -1;
+
+                }
 
             }
+            else {
+
+                cpu.color[0] = 1.0; // Keep CPU color red
+                cpu.color[1] = 0.0;
+                cpu.color[2] = 0.0;
+            }
+
+
 
         }
-        else {
-
-            cpu.color[0] = 1.0; // Keep CPU color red
-            cpu.color[1] = 0.0;
-            cpu.color[2] = 0.0;
-        }
-
-
-
     }
     else {
 
@@ -671,10 +711,11 @@ void UpdateNonPreemptivePriorityScheduling() {
     while (nextProcessIndex < processes.size() && processes[nextProcessIndex].arrivalTime <= currentTime) {
         // Create a new process
         Process p = processes[nextProcessIndex];
-        p.x = -200 - nextProcessIndex * 20; // Initial x position
-        p.y = 100; // Initial y position
+        p.x = 65 + (readyQueue.size() * 25); // Initial x position in the ready queue
+        p.y = -10; // Initial y position in the ready queue
         p.radius = 10; // Radius of the process circle
         p.isExecuting = false;
+        readyQueue.push(p);
         processes[nextProcessIndex] = p;
         nextProcessIndex++;
     }
@@ -713,10 +754,29 @@ void UpdateNonPreemptivePriorityScheduling() {
         }
     }
 
-        if (prevExecutingProcessIndex != -1) {
-            // Start executing the highest priority job
-            Process& p = processes[prevExecutingProcessIndex];
-            
+    if (prevExecutingProcessIndex != -1) {
+        // Start executing the highest priority job
+        Process& p = processes[prevExecutingProcessIndex];
+        p.Executing = true;
+        if (p.y < 20 && p.x>65)
+        {
+
+            p.x -= 1;
+        }
+        else if (p.y < 20)
+        {
+            p.y += 1;
+        }
+        else if (p.x > 10 && p.y < cpu.y)
+        {
+            p.x -= 1;
+        }
+        else if (p.y < cpu.y)
+        {
+            p.y += 1;
+        }
+        else
+        {
             float dx = cpu.x - p.x;
             float dy = cpu.y - p.y;
             float dist = sqrt(dx * dx + dy * dy);
@@ -730,16 +790,18 @@ void UpdateNonPreemptivePriorityScheduling() {
                 cpu.color[0] = 1.0;
                 cpu.color[1] = 0.0;
                 cpu.color[2] = 0.0;
-               
+                p.Executing = false;
                 // Execute the process for one time unit
 
 
                 p.burstTime--;
+
                 cout << currentTime << endl;
 
                 // If the process has completed execution, update Gantt chart and remove the process
                 if (p.burstTime == 0) {
                     ganttChart.chart.push_back({ p.pid, make_tuple(p.arrivalTime,currentTime,p.color) });
+                    readyQueue.pop();
                     p.x = -200 - prevExecutingProcessIndex * 20; // Initial x position
                     p.y = 100; // Initial y position
                     prevExecutingProcessIndex = -1;
@@ -756,6 +818,7 @@ void UpdateNonPreemptivePriorityScheduling() {
 
 
         }
+    }
         else {
 
             cpu.color[0] = 0.6;
@@ -822,8 +885,8 @@ void UpdateNonPreemptivePriorityScheduling() {
         // Check if any process has arrived and add it to the ready queue
         while (nextProcessIndex < processes.size() && processes[nextProcessIndex].arrivalTime <= currentTime) {
             Process p = processes[nextProcessIndex];
-            p.x = -200 - nextProcessIndex * 20; // Initial x position
-            p.y = 100; // Initial y position
+            p.x = 65 + (readyQueue.size() * 25); // Initial x position in the ready queue
+            p.y = -10; // Initial y position in the ready queue
             p.radius = 10; // Radius of the process circle
             p.isExecuting = false;
             p.id = nextProcessIndex + 1; // Set process ID using index
@@ -860,13 +923,32 @@ void UpdateNonPreemptivePriorityScheduling() {
                 }
             
             // Move the process towards the CPU
-            if (prevExecutingProcessIndex != -1  ) {
-                Process& p = processes[prevExecutingProcessIndex];
-                p.isExecuting = true;
+        if (prevExecutingProcessIndex != -1) {
+            Process& p = processes[prevExecutingProcessIndex];
+            p.isExecuting = true;
+            if (p.y < 20 && p.x>65)
+            {
+
+                p.x -= 1;
+            }
+            else if (p.y < 20)
+            {
+                p.y += 1;
+            }
+            else if (p.x > 10 && p.y < cpu.y)
+            {
+                p.x -= 1;
+            }
+            else if (p.y < cpu.y)
+            {
+                p.y += 1;
+            }
+            else
+            {
                 float dx = cpu.x - p.x;
                 float dy = cpu.y - p.y;
                 float dist = sqrt(dx * dx + dy * dy);
-               
+
                 p.x += dx / dist * 1;
                 p.y += dy / dist * 1;
 
@@ -878,21 +960,22 @@ void UpdateNonPreemptivePriorityScheduling() {
                     cpu.color[2] = 0.0;
                     p.isExecuting = false;
                     p.burstTime--;
-                   
-                   
-                    if (p.responseTime == 0 && p.arrivalTime>0)
+
+
+                    if (p.responseTime == 0 && p.arrivalTime > 0)
                     {
-                        p.responseTime = currentTime - p.arrivalTime-1;
+                        p.responseTime = currentTime - p.arrivalTime - 1;
                     }
                     if (p.burstTime != 0)
                     {
-                       
+
                         ganttChart.chart.push_back({ p.pid, make_tuple(p.arrivalTime, currentTime, p.color) });
 
                         readyQueue.pop();
                         readyQueue.push(p);
-                        p.x = -200 - prevExecutingProcessIndex * 20; // Initial x position
-                        p.y = 100; // Initial y position
+                        cout << readyQueue.size()<<endl;
+                        p.x = 65 + (readyQueue.size() * 25); // Initial x position in the ready queue
+                        p.y = -10; // Initial y position in the ready queue
                         prevExecutingProcessIndex = -1;
 
 
@@ -924,6 +1007,7 @@ void UpdateNonPreemptivePriorityScheduling() {
                 }
 
             }
+        }
             else {
 
                 cpu.color[0] = 0.6;
@@ -1001,8 +1085,8 @@ void UpdateNonPreemptivePriorityScheduling() {
         while (nextProcessIndex < processes.size()&& processes[nextProcessIndex].arrivalTime <= currentTime) {
            
                 Process p = processes[nextProcessIndex];
-                p.x = -200 - nextProcessIndex * 20; // Initial x position
-                p.y = 100; // Initial y position
+                p.x = 65 + (readyQueue.size() * 25); // Initial x position in the ready queue
+                p.y = -10; // Initial y position in the ready queue
                 p.radius = 10; // Radius of the process circle
                 p.isExecuting = false;
                 p.id = nextProcessIndex + 1; // Set process ID using index
@@ -1052,59 +1136,79 @@ void UpdateNonPreemptivePriorityScheduling() {
         if (prevExecutingProcessIndex != -1) {
             Process& p = processes[prevExecutingProcessIndex];
             p.isExecuting = true;
-            float dx = cpu.x - p.x;
-            float dy = cpu.y - p.y;
-            float dist = sqrt(dx * dx + dy * dy);
+            if (p.y < 20 && p.x>65)
+            {
 
-            p.x += dx / dist * 1;
-            p.y += dy / dist * 1;
+                p.x -= 1;
+            }
+            else if (p.y < 20)
+            {
+                p.y += 1;
+            }
+            else if (p.x > 10 && p.y < cpu.y)
+            {
+                p.x -= 1;
+            }
+            else if (p.y < cpu.y)
+            {
+                p.y += 1;
+            }
+            else
+            {
+                float dx = cpu.x - p.x;
+                float dy = cpu.y - p.y;
+                float dist = sqrt(dx * dx + dy * dy);
 
-            // Check if the process has reached the CPU
-            if (p.x >= cpu.x - 20 && p.x <= cpu.x + 20 && p.y >= cpu.y - 20 && p.y <= cpu.y + 20) {
-                // Execute the process for one time unit (preemptive)
-                cpu.color[0] = 1.0;
-                cpu.color[1] = 0.0;
-                cpu.color[2] = 0.0;
-                p.isExecuting = false;
-                p.burstTime--;
-                cout << p.burstTime << endl;
-                if (p.responseTime == 0) {
-                    p.responseTime = currentTime - p.arrivalTime;
+                p.x += dx / dist * 1;
+                p.y += dy / dist * 1;
+
+                // Check if the process has reached the CPU
+                if (p.x >= cpu.x - 20 && p.x <= cpu.x + 20 && p.y >= cpu.y - 20 && p.y <= cpu.y + 20) {
+                    // Execute the process for one time unit (preemptive)
+                    cpu.color[0] = 1.0;
+                    cpu.color[1] = 0.0;
+                    cpu.color[2] = 0.0;
+                    p.isExecuting = false;
+                    p.burstTime--;
+                    cout << p.burstTime << endl;
+                    if (p.responseTime == 0) {
+                        p.responseTime = currentTime - p.arrivalTime;
+                    }
+                    if (p.burstTime > 0)
+                    {
+
+                        ganttChart.chart.push_back({ p.pid, make_tuple(p.arrivalTime, currentTime, p.color) });
+                        readyQueue.pop();
+                        readyQueue.push(p);
+                        p.x = 65 + (readyQueue.size() * 25); // Initial x position in the ready queue
+                        p.y = -10; // Initial y position in the ready queue
+                        prevExecutingProcessIndex = -1;
+
+
+                    }
+
+
+                    else if (p.burstTime <= 0) {
+
+                        ganttChart.chart.push_back({ p.pid, make_tuple(p.arrivalTime, currentTime, p.color) });
+                        readyQueue.pop();
+
+                        p.turnaroundTime = currentTime - p.arrivalTime;
+                        p.waitingTime = p.turnaroundTime - p.originalBurstTime;
+                        // Remove the process from the processes vector
+                        p.x = -200 - prevExecutingProcessIndex * 20; // Initial x position
+                        p.y = 100; // Initial y position
+                        prevExecutingProcessIndex = -1; // Reset the currently executing process index to allow context switching
+                        cpu.color[0] = 0.6;
+                        cpu.color[1] = 0.2;
+                        cpu.color[2] = 0.4;
+                    }
                 }
-                if (p.burstTime > 0)
-                {
-
-                    ganttChart.chart.push_back({ p.pid, make_tuple(p.arrivalTime, currentTime, p.color) });
-                    readyQueue.pop();
-                    readyQueue.push(p);
-                    p.x = -200 - prevExecutingProcessIndex * 20; // Initial x position
-                    p.y = 100; // Initial y position
-                    prevExecutingProcessIndex = -1;
-
-
-                }
-              
-
-                else if (p.burstTime <= 0) {
-
-                    ganttChart.chart.push_back({ p.pid, make_tuple(p.arrivalTime, currentTime, p.color) });
-                    readyQueue.pop();
-
-                    p.turnaroundTime = currentTime - p.arrivalTime;
-                    p.waitingTime = p.turnaroundTime - p.originalBurstTime;
-                    // Remove the process from the processes vector
-                    p.x = -200 - prevExecutingProcessIndex * 20; // Initial x position
-                    p.y = 100; // Initial y position
-                    prevExecutingProcessIndex = -1; // Reset the currently executing process index to allow context switching
+                else {
                     cpu.color[0] = 0.6;
                     cpu.color[1] = 0.2;
                     cpu.color[2] = 0.4;
                 }
-            }
-            else {
-                cpu.color[0] = 0.6;
-                cpu.color[1] = 0.2;
-                cpu.color[2] = 0.4;
             }
         }
         else {
@@ -1141,6 +1245,7 @@ void update() {
         
         break;
     }
+    cout << currentTime << endl;
     if (currentTime >= totaltime) {
         if (delayCounter < DELAY_TIME)
         {
@@ -1159,7 +1264,9 @@ void update() {
             nextProcessIndex = 0;
             prevExecutingProcessIndex = -1;
             totaltime = 0.0;
+            delayCounter = 0;
             cout << "Algorithm run complete. Please select a new algorithm." << endl;
+
             mainLoop();
         }
     }
@@ -1278,7 +1385,7 @@ void display() {
        
     float yPos = 250; // Initial y-position for process text at the top corner
     // Draw the processes
-    int pid;
+    
     float Totalwaitingtime = 0, Totalturnaroundtime = 0;
    
     for (int i = 0; i < processes.size(); i++) {
@@ -1290,7 +1397,7 @@ void display() {
        
         Totalwaitingtime += p.waitingTime;
         Totalturnaroundtime += p.turnaroundTime;
-        // Move to the next line for the next process
+     
 
     }
     glColor3f(0.0, 0.0, 1.0);
@@ -1302,7 +1409,7 @@ void display() {
     for (int j = 0; j < processText.length(); j++) {
         glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, processText[j]);
     }
-    float y = 180;
+    float y = 200;
     if (selectedAlgorithm == 1 || selectedAlgorithm > 3)
     {
         for (int i = 0; i < processes.size(); i++)
@@ -1349,28 +1456,25 @@ void display() {
             string status;
             stringstream ss;
             Process& p = processes[i];
-            if (p.burstTime<p.originalBurstTime)
+            if (p.Executing == true)
+            {
+                status = "running";
+            }
+            else
             {
                 if (p.burstTime == 0)
                 {
                     status = "completed";
                 }
-                else
-                {
-                    status = "running";
-                }
-            }
-            else
-            {
-                if (p.arrivalTime > currentTime)
+                else if (p.arrivalTime > currentTime)
                 {
                     status = "not yet arrived";
-               }
+                }
                 else
                 {
                     status = "waiting";
                 }
-              
+
 
             }
             glRasterPos2f(270, y);
@@ -1423,17 +1527,17 @@ void mainLoop() {
             if (selectedAlgorithm == 2 || selectedAlgorithm == 4) {
                 cout << ", color R, G, B): ";
                 cin >> pid >> arrivalTime >> burstTime >> color[0] >> color[1] >> color[2];
-                processes.push_back({ 0, pid, arrivalTime, burstTime,burstTime, 0, 0, 10, false, 0,0,0,0,{color[0], color[1], color[2]} });
+                processes.push_back({ 0, pid, arrivalTime, burstTime,burstTime, 0, 0, 10, false,false, 0,0,0,0,{color[0], color[1], color[2]} });
             }
             else if (selectedAlgorithm == 3 || selectedAlgorithm == 5) {
                 cout << ", priority, color R, G, B): ";
                 cin >> pid >> arrivalTime >> burstTime >> priority >> color[0] >> color[1] >> color[2];
-                processes.push_back({ 0, pid, arrivalTime, burstTime,burstTime, 0, 0, 10, false, priority,0,0,0,{color[0], color[1], color[2]} });
+                processes.push_back({ 0, pid, arrivalTime, burstTime,burstTime, 0, 0, 10, false,false, priority,0,0,0,{color[0], color[1], color[2]} });
             }
             else {
                 cout << ", color R, G, B): ";
                 cin >> pid >> arrivalTime >> burstTime >> color[0] >> color[1] >> color[2];
-                processes.push_back({ 0,pid, arrivalTime, burstTime,burstTime, 0, 0, 10, false, 0,0,0,0,{color[0], color[1], color[2]} });
+                processes.push_back({ 0,pid, arrivalTime, burstTime,burstTime, 0, 0, 10, false,false, 0,0,0,0,{color[0], color[1], color[2]} });
             }
         }
 
@@ -1456,7 +1560,7 @@ void mainLoop() {
 int main(int argc, char** argv) {
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
-    glutInitWindowSize(920, 610);
+    glutInitWindowSize(950, 610);
     glutCreateWindow("Scheduling Algorithm Animation");
     init();
 
