@@ -74,6 +74,14 @@ Before you begin, ensure you have met the following requirements:
 
    Observe how the chosen scheduling algorithm manages process execution. The visualization will show processes moving through different states, including ready, running, and waiting.
 
+## Screenshots
+
+
+
+### Process Scheduling Visualization
+
+![Process Scheduling](screenshots/process_scheduling.png)
+
 ## License
 
 This project is licensed under the Apache License, Version 2.0. See the [LICENSE](LICENSE) file for details.
