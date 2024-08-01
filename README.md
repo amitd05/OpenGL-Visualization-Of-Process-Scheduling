@@ -31,8 +31,8 @@ Before you begin, ensure you have met the following requirements:
 1. **Clone the repository:**
 
     ```sh
-    git clone https://github.com/yourusername/process-scheduling-visualization.git
-    cd process-scheduling-visualization
+    git clone https://github.com/amitd05/OpenGL-Visualization-Of-Process-Scheduling.git
+    cd OpenGL-Visualization-Of-Process-Scheduling
     ```
 
 2. **Install dependencies:**
