@@ -91,10 +91,18 @@ Contributions are welcome! Please follow these steps to contribute to this proje
 
 - Amit Sandeep Raikar(https://github.com/amitd05)
 
-## Acknowledgments
+- ## Acknowledgments
 
-- OpenGL community and contributors
-- Any other libraries or tools you used
+This project was completed as part of the coursework for [Minor Project 1] at [KLE Technological University Belagavi]. I would like to express my gratitude to the following individuals and groups for their support and contributions:
+- **Classmates and Peers**: A big thank you to my classmates [Veeresh B H,Prithviraj Kamabale] for their collaborative efforts, brainstorming sessions, and moral support.
+- **Libraries and Tools**: 
+  - [OpenGL](https://www.opengl.org/) for providing the graphics API used for visualization.
+  - [GLUT (OpenGL Utility Toolkit)](https://www.opengl.org/resources/libraries/glut/) for handling window creation and input.
+  - [GLU (OpenGL Utility Library)](https://www.opengl.org/resources/libraries/glu/) for additional OpenGL functionality.
+- **College Resources**: Thank you to [Kle Technological University Belagavi ] for providing access to the required software and academic resources.
+
+Your acknowledgment here if there are any other key people or resources to mention.
+
 
 
 
