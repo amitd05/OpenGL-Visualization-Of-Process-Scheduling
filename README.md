@@ -101,9 +101,9 @@ This project was completed as part of the coursework for [Minor Project 1] at [K
   - [GLU (OpenGL Utility Library)](https://www.opengl.org/resources/libraries/glu/) for additional OpenGL functionality.
 - **College Resources**: Thank you to [Kle Technological University Belagavi ] for providing access to the required software and academic resources.
 
-Your acknowledgment here if there are any other key people or resources to mention.
 
 
 
 
-.
+
+
