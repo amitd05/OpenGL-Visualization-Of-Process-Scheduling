@@ -80,7 +80,7 @@ Before you begin, ensure you have met the following requirements:
 
 ### Process Scheduling Visualization
 
-![Process Scheduling](screenshots/process_scheduling.png)
+![Process Scheduling](process-scheduling.png)
 
 ## License
 
